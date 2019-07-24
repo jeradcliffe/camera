@@ -17,7 +17,6 @@ import static javax.swing.JFrame.EXIT_ON_CLOSE;
 public class WebCamOrchestrator {
 
 
-
     private JFrame frame;
     private WebcamPanel panel;
     private JComboBox comboBox;
@@ -26,12 +25,14 @@ public class WebCamOrchestrator {
     public WebCamOrchestrator(WebCamService webCamService) {
         this.webCamService = webCamService;
         this.frame = getjFrame();
-        this.frame = getjFrame();
+
+        this.comboBox = getjComboBox();
 
         this.panel = getWebcamPanel();
-        this.frame.add(panel);
-        this.comboBox = getjComboBox();
         this.panel.add(comboBox);
+
+        this.frame.add(panel);
+        this.frame.pack();
         this.frame.setVisible(true);
     }
 
@@ -43,32 +44,6 @@ public class WebCamOrchestrator {
         return jFrame;
     }
 
-    private JComboBox<String> getjComboBox() {
-        JComboBox<String> cb = new JComboBox<>(webCamService.getCamerasArray());
-        cb.setMaximumSize(cb.getPreferredSize());
-        cb.setAlignmentX(CENTER_ALIGNMENT);
-        cb.setAlignmentY(BOTTOM_ALIGNMENT);
-        cb.addActionListener(getComboBoxActionListener(cb));
-        return cb;
-    }
-
-    public ActionListener getComboBoxActionListener(JComboBox<String> cb) {
-        return e -> {
-            String selectedCam = (String) cb.getSelectedItem();
-            System.err.println("!!!!! selectedCam = " + selectedCam);
-            webCamService.setCamera(webCamService.getCamerasList().stream()
-                    .filter(x -> x.getName().equals(selectedCam))
-                    .findFirst()
-                    .orElse(null)
-            );
-            frame.remove(panel);
-            panel = getWebcamPanel();
-            frame.add(panel);
-            frame.pack();
-        };
-    }
-
-
     private WebcamPanel getWebcamPanel() {
         Webcam camera = webCamService.getCamera();
         camera.setViewSize(VGA.getSize());
@@ -79,5 +54,31 @@ public class WebCamOrchestrator {
         panel.setImageSizeDisplayed(true);
         panel.setMirrored(true);
         return panel;
+    }
+
+    private JComboBox<String> getjComboBox() {
+        JComboBox<String> cb = new JComboBox<>(webCamService.getCamerasArray());
+        cb.setMaximumSize(cb.getPreferredSize());
+        cb.setAlignmentX(CENTER_ALIGNMENT);
+        cb.setAlignmentY(BOTTOM_ALIGNMENT);
+        cb.addActionListener(getComboBoxActionListener(cb));
+        return cb;
+    }
+
+    private ActionListener getComboBoxActionListener(JComboBox<String> cb) {
+        System.err.println("!!!!! selectedCam = " + cb.getSelectedItem());
+        return e -> {
+            webCamService.getCamera().close();
+            webCamService.setCamera(webCamService.getCamerasList().stream()
+                    .filter(x -> x.getName().equals(cb.getSelectedItem()))
+                    .findFirst()
+                    .orElse(null)
+            );
+            frame.remove(panel);
+            panel = getWebcamPanel();
+            frame.add(panel);
+            panel.add(cb);
+            frame.pack();
+        };
     }
 }
